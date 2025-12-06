@@ -1,6 +1,3 @@
-[submodule "web/app/plugins/ollie-mcp"]
-	path = web/app/plugins/ollie-mcp
-	url = https://collegeman@github.com/collegeman/OllieWPMCP.git
 [submodule "web/app/plugins/mcp-adapter"]
 	path = web/app/plugins/mcp-adapter
 	url = https://github.com/WordPress/mcp-adapter.git
