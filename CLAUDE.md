@@ -71,11 +71,11 @@ echo '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' | \
   wp mcp-adapter serve --user=admin --server=mcp-adapter-default-server
 ```
 
-## MCP Client Configuration
+## MCP Transport Options
 
-### STDIO Transport (Local Development)
+### STDIO Transport (Local)
 
-Add to your MCP configuration (Claude CLI, VS Code, Cursor):
+For local development where WP-CLI is available:
 
 ```json
 {
@@ -94,29 +94,79 @@ Add to your MCP configuration (Claude CLI, VS Code, Cursor):
 }
 ```
 
-### HTTP Transport (Remote Access)
+### HTTP Transport (Remote)
 
-Endpoint: `POST /wp-json/mcp/mcp-adapter-default-server`
+For remote access via REST API:
 
-Requires:
-- Authentication via Application Password (Basic Auth)
-- Session handling: Get `Mcp-Session-Id` header from initialize response, include in subsequent requests
+- **Endpoint:** `POST /wp-json/mcp/mcp-adapter-default-server`
+- **Auth:** Application Password via Basic Auth
+- **Session:** Include `Mcp-Session-Id` header from initialize response
 
-```bash
-# Initialize and get session
-curl -X POST https://yoursite.com/wp-json/mcp/mcp-adapter-default-server \
-  -u "admin:APP_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}'
-# Response includes Mcp-Session-Id header
+## Claude CLI Setup
 
-# List tools (include session header)
-curl -X POST https://yoursite.com/wp-json/mcp/mcp-adapter-default-server \
-  -u "admin:APP_PASSWORD" \
-  -H "Content-Type: application/json" \
-  -H "Mcp-Session-Id: YOUR_SESSION_ID" \
-  -d '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+### Option 1: Local with STDIO
+
+Best for local development. Claude CLI spawns WP-CLI as a subprocess.
+
+1. Ensure WP-CLI is installed and in your PATH
+2. Add to `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "olliewpmcp": {
+      "command": "wp",
+      "args": [
+        "--path=/Users/aaron/repos/OllieMCP/server/web/wp",
+        "mcp-adapter",
+        "serve",
+        "--server=mcp-adapter-default-server",
+        "--user=admin"
+      ]
+    }
+  }
+}
 ```
+
+3. Restart Claude CLI - the `olliewpmcp` server will be available
+
+### Option 2: Remote with HTTP
+
+Best for connecting to remote WordPress sites.
+
+1. Create an Application Password at `https://yoursite.com/wp-admin/profile.php`
+
+2. Generate Base64 credentials:
+```bash
+echo -n "admin:YOUR_APP_PASSWORD" | base64
+```
+
+3. Add to `~/.claude.json`:
+
+```json
+{
+  "mcpServers": {
+    "olliewpmcp": {
+      "url": "https://olliewpmcp.test/wp-json/mcp/mcp-adapter-default-server",
+      "headers": {
+        "Authorization": "Basic YOUR_BASE64_CREDENTIALS"
+      }
+    }
+  }
+}
+```
+
+4. Restart Claude CLI
+
+### Verifying Connection
+
+Once configured, ask Claude CLI:
+
+```
+What MCP tools are available from WordPress?
+```
+
+Claude should list the available tools including `mcp-adapter-discover-abilities`, `mcp-adapter-execute-ability`, etc.
 
 ## Submodule Workflow
 
